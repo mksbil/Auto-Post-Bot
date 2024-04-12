@@ -1,0 +1,61 @@
+{
+  "name": "Auto-Post-Bot",
+  "description": "Telegram Bot to post multiple messages to multiple channel through just one bot",
+  "logo": "https://graph.org/file/e30efcd2b42b81749996c.jpg",
+  "keywords": [
+    "Mongo DB",
+    "telegram bot",
+    "snowball",
+    "auto post",
+    "auto post telegram bot"
+  ],
+  "repository": "https://github.com/Snowball-01/Auto-Posting-Bot",
+  "success_url": "",
+  "env": {
+    "API_ID": {
+      "description": "Your APP ID From my.telegram.org ",
+      "value": "",
+      "required": true
+    },
+    "API_HASH": {
+      "description": "Your API Hash From my.telegram.org ",
+      "value": "",
+      "required": true
+    },
+    "FORCE_SUB": {
+      "description": "Your force sub channel user name without [@] ",
+      "value": "",
+      "required": true
+    },
+    "BOT_TOKEN": {
+      "description": "Your Bot Token From @BotFather",
+      "value": "",
+      "required": true
+    },
+    "BOT_USERNAME": {
+      "description": "Your Bot Username From @BotFather without [@]",
+      "value": "",
+      "required": true
+    },
+    "ADMIN": {
+      "description": "Add Your User ID multiple is use space to split",
+      "value": "",
+      "required": true
+    },
+    "LOG_CHANNEL": {
+      "description": "Bot Log Sending Channel (just create a private channel and add bot to admin and take channel id to add this variable) ⚠️ id startswith -100 must",
+      "value": "",
+      "required": true
+    },
+    "DB_URL": {
+      "description": "Your Mongo DB URL Obtained From mongodb.com",
+      "value": "",
+      "required": true
+    },
+    "START_PIC": {
+      "description": "Your Bot start cmd Pic from @TheSnowballBot use /telegraph",
+      "value": "",
+      "required": false
+    }
+  }
+}
