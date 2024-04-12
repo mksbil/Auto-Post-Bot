@@ -1,7 +1,7 @@
 services:
   - type: web
     plan: free
-    name: ProMegaDownloader
+    name: AutoPostBot
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python bot.py
@@ -24,8 +24,4 @@ services:
       - key: START_PIC
         sync: false
       - key: ADMIN
-        sync: false
-      - key: DUMP_CHANNEL
-        sync: false
-      - key: COOKIES
         sync: false
