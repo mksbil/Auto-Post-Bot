@@ -7,20 +7,20 @@ id_pattern = re.compile(r'^.\d+$')
 
 class Config(object):
     # pyro client config
-    API_ID = os.environ.get("API_ID", "27060846")  # ⚠️ Required
-    API_HASH = os.environ.get("API_HASH", "8f39072a61dbb296f38e4ff2b6cbe478")  # ⚠️ Required
-    BOT_TOKEN = os.environ.get("BOT_TOKEN", "6947386849:AAHy03YXoWwEW2hDOAQxCoSW-IjDhHso1G0")  # ⚠️ Required
-    BOT_USERNAME = os.environ.get("BOT_USERNAME", "TzingBot")  # ⚠️ Required
+    API_ID = os.environ.get("API_ID", "")  # ⚠️ Required
+    API_HASH = os.environ.get("API_HASH", "")  # ⚠️ Required
+    BOT_TOKEN = os.environ.get("BOT_TOKEN", "")  # ⚠️ Required
+    BOT_USERNAME = os.environ.get("BOT_USERNAME", "")  # ⚠️ Required
 
     # database config
-    DB_URL = os.environ.get("DB_URL", "mongodb://localhost:27017")  # ⚠️ Required
+    DB_URL = os.environ.get("DB_URL", "")  # ⚠️ Required
 
     # other configs
     BOT_UPTIME = time.time()
-    START_PIC = os.environ.get("START_PIC", "https://telegra.ph/file/35175ab374c4a4f309bbb.jpg")
-    ADMIN = [int(admin) if id_pattern.search(admin) else admin for admin in os.environ.get('ADMIN', '6065594762').split()]  # ⚠️ Required
-    FORCE_SUB = os.environ.get('FORCE_SUB', 'Kdramaland')  # ⚠️ Required without [@]
-    LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1001971176803"))  # ⚠️ Required
+    START_PIC = os.environ.get("START_PIC", "https://graph.org/file/e30efcd2b42b81749996c.jpg")
+    ADMIN = [int(admin) if id_pattern.search(admin) else admin for admin in os.environ.get('ADMIN', '').split()]  # ⚠️ Required
+    FORCE_SUB = os.environ.get('FORCE_SUB', '')  # ⚠️ Required without [@]
+    LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", ""))  # ⚠️ Required
 
     
     # wes response configuration
