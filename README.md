@@ -1,6 +1,6 @@
 ## Deploy To Render
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Snowball-01/TeraBox-Downloader)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Snowball-01/Auto-Post-Bot)
 
 ## Deploy To Railway 
 
@@ -8,7 +8,7 @@
 
 ## Deploy To Heroku 
 
-<a href="https://heroku.com/deploy?template=https://github.com/Snowball-01/TeraBox-Downloader"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy"></a>
+<a href="https://heroku.com/deploy?template=https://github.com/Snowball-01/Auto-Post-Bot"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy"></a>
 
 
 
