@@ -114,8 +114,11 @@ async def handle_single_posting(bot: Client, query: CallbackQuery):
                     await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
 
         else:
-
-            await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
+            if time != 0:
+                asyncio.sleep(time * 3600)
+                await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
+            else:            
+                await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
 
     else:
         if postid == "all":
@@ -130,8 +133,11 @@ async def handle_single_posting(bot: Client, query: CallbackQuery):
                     await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post))
 
         else:
-
-            await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid))
+            if time != 0:
+                await asyncio.sleep(time * 3600)
+                await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid))
+            else:
+                await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid))
     try:
         if ms:
             await ms.edit("**ᴘᴏsᴛ sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**")
