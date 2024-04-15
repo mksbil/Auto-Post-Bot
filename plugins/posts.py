@@ -1,237 +1,88 @@
-import asyncio
-import sys
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from helper.database import db
-from config import Config
 from helper.utils import extract_title_and_url
 from pyromod.exceptions import ListenerTimeout
+from config import Config
 
 
-@Client.on_message(filters.private & filters.command('send_post'))
-async def handle_send_post(bot: Client, message: Message):
-    user_id = message.from_user.id
+async def handle_post(user_id):
     posts = await db.get_posts(user_id)
-    channels = await db.get_channels(user_id)
+    btn = []
+    text = ""
     if not posts:
-        return await message.reply_text("**ʏᴏᴜ ᴅɪᴅɴ'ᴛ ʜᴀᴠᴇ ᴀᴅᴅᴇᴅ ᴀɴʏ ᴘᴏsᴛ ʏᴇᴛ ᴜsᴇ /my_posts ᴛᴏ ᴀᴅᴅ ʏᴏᴜʀ ᴘᴏsᴛ !**", reply_to_message_id=message.id)
+        btn.append([InlineKeyboardButton('➕ ᴀᴅᴅ ᴘᴏsᴛ', callback_data='addpost')])
+        btn.append([InlineKeyboardButton('✘ ᴄʟᴏsᴇ', callback_data='close')])
+        text = "☘️ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴀɴʏ ᴘᴏsᴛs ʏᴇᴛ ᴄʟɪᴄᴋ ᴏɴ 'ᴀᴅᴅ ᴘᴏsᴛ' ʙᴜᴛᴛᴏɴ ᴛᴏ ᴀᴅᴅ ᴘᴏsᴛs"
+    
+    else:
+    
+        for idx, post in enumerate(posts):
+            btn.append([InlineKeyboardButton(f'ᴘᴏsᴛ {idx+1}', callback_data=f'viewpost_{post}'), InlineKeyboardButton(f'ᴅᴇʟᴇᴛᴇ', callback_data=f'delpost_{post}')])
+        
+        btn.append([InlineKeyboardButton('➕ ᴀᴅᴅ ᴘᴏsᴛ', callback_data='addpost')])
+        btn.append([InlineKeyboardButton('✘ ᴄʟᴏsᴇ', callback_data='close')])
+        text = "☘️ ᴛʜᴇ ғᴏʟʟᴏᴡɪɴɢ ʙᴜᴛᴛᴏɴs sʜᴏᴡs ᴛʜᴇ ɴᴜᴍʙᴇʀ ᴏғ ᴘᴏsᴛs ʏᴏᴜ ʜᴀᴠᴇ ᴀᴅᴅᴇᴅ ʏᴏᴜ ᴄᴀɴ ᴄʟɪᴄᴋ ᴏɴ ᴀɴʏ ᴘᴏsᴛ ᴛᴏ ɢᴇᴛ ʀᴇᴘʟɪᴇᴅ ᴏғ ᴛʜᴀᴛ ᴘᴏsᴛ"
+    
+    return text, btn
 
-    if not channels:
-        return await message.reply_text("**ʏᴏᴜ ᴅɪᴅɴ'ᴛ ʜᴀᴠᴇ ᴀᴅᴅᴇᴅ ᴀɴʏ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ ᴜsᴇ /my_channels ᴛᴏ ᴀᴅᴅ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟ !**", reply_to_message_id=message.id)
+@Client.on_message(filters.private & filters.command('my_posts'))
+async def handle_my_posts(bot: Client, message: Message):
 
-    buttons = []
+    user_id = message.from_user.id
+    text, btn = await handle_post(user_id)
+    await message.reply_text(text=text, reply_markup=InlineKeyboardMarkup(btn))
+    
 
-    for idx, post in enumerate(posts):
-        buttons.append([InlineKeyboardButton(
-            f'ᴘᴏsᴛ {idx+1}', callback_data=f'send_{post}')])
-
-    text = f"🛻 **sᴇʟᴇᴄᴛ ʏᴏᴜʀ ᴘᴏsᴛ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇɴᴅ ?**"
-
-    buttons.append([InlineKeyboardButton(
-        f'sᴇʟᴇᴄᴛ ᴀʟʟ ᴘᴏsᴛs', callback_data=f'send_all')])
-    await message.reply_text(text, reply_markup=InlineKeyboardMarkup(buttons))
-
-
-async def interval(bot, query):
+@Client.on_callback_query(filters.regex(r'^addpost'))
+async def handle_add_post(bot: Client, query: CallbackQuery):
+    
+    await query.message.delete()
+    chat_id = query.message.chat.id
     try:
-        time_interval = await bot.ask(chat_id=query.from_user.id, text="Eɴᴛᴇʀ ᴛʜᴇ ɪɴᴛᴇʀᴠᴀʟ ᴏғ ᴛɪᴍᴇ. Cʜᴏᴏsᴇ ᴀɴʏ ɪɴᴛᴇɢᴇʀ ᴜɴᴅᴇʀ 24, ᴀɴᴅ ᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴀᴛ ᴛʜᴀᴛ ʜᴏᴜʀ. Fᴏʀ ᴇxᴀᴍᴘʟᴇ, ɪғ ʏᴏᴜ ᴇɴᴛᴇʀ 4, ᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴇᴠᴇʀʏ 4 ʜᴏᴜʀs ғᴏʀ ᴇᴀᴄʜ ᴘᴏsᴛ.\n\n/cancel - cancel this process")
+        post = await bot.ask(chat_id=chat_id, text="**(FORWARD ME POST)**\n\nғᴏʀᴡᴀʀᴅ ᴍᴇ ᴛʜᴇ ᴘᴏsᴛ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴀᴛ ᴛᴏ sᴀᴠᴇ", filters=filters.forwarded, timeout=30)
     except ListenerTimeout:
-        await query.message.reply_text("**Rᴇǫᴜᴇsᴛ Tɪᴍᴇᴏᴜᴛ !**\n\nYᴏᴜʀ ᴀʀᴇ ᴛᴀᴋɪɴɢ ᴛᴏᴏ ʟᴏɴɢ ᴛᴏ sᴇɴᴅ")
-        return 0
+        await query.message.reply_text("ʀᴇǫᴜᴇsᴛ ᴛɪᴍᴇ ᴏᴜᴛ !\n\n**⚠️ ʏᴏᴜ ᴀʀᴇ ᴛᴀᴋɪɴɢ ᴛᴏᴏ ʟᴏɴɢ ᴛᴏ ғᴏʀᴡᴀʀᴅ ᴘᴏsᴛ**")
 
-    if time_interval.text == "/cancel":
-        await query.message.reply_text("<b>process canceled</b>",)
-        return 0
+    
+    post_id = await bot.copy_message(Config.LOG_CHANNEL, chat_id, post.id)
 
-    elif not str(time_interval.text).isnumeric():
-        await query.message.reply_text("**Iɴᴠᴀʟɪᴅ Fᴏʀᴍᴀᴛ !**")
-        return 0
+    await db.set_posts(chat_id, post_id.id)
+    
+    await query.message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nᴜsᴇ /my_posts ᴛᴏ ᴠɪᴇᴡ ᴀʟʟ ʏᴏᴜʀ ᴘᴏsᴛs", reply_to_message_id=post.id)
 
-    elif int(time_interval.text) > 24:
-        await query.message.reply_text("☘️ **sᴇɴᴅ ɴᴜᴍʙᴇʀ ᴜɴᴅᴇʀ 24**")
-        return 0
-    else:
-        return int(time_interval.text)
-
-
-@Client.on_callback_query(filters.regex(r'^send_'))
-async def handle_query_send(bot: Client, query: CallbackQuery):
-    await query.message.edit("**ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...**")
+@Client.on_callback_query(filters.regex(r'^delpost_'))
+async def handle_delete_post(bot: Client, query: CallbackQuery):
+    
     user_id = query.from_user.id
-    channels = await db.get_channels(user_id)
     post_id = query.data.split('_')[1]
-    save_channels = []
+    await db.del_post(user_id, int(post_id))
+    
+    await bot.delete_messages(int(Config.LOG_CHANNEL), int(post_id))
+    
+    text, btn = await handle_post(user_id)
+    await query.message.edit(text=text, reply_markup=InlineKeyboardMarkup(btn))
+    
+@Client.on_callback_query(filters.regex(r'^viewpost_'))
+async def handle_view_post(bot: Client, query: CallbackQuery):
+    post_id = int(query.data.split('_')[1])
+    user_id = query.from_user.id
+    save_buttons = await db.get_buttons(user_id)
+    btn = []
+    if save_buttons:
 
-    for channelid in channels:
-        try:
-            info = await bot.get_chat(channelid)
-            save_channels.append([InlineKeyboardButton(
-                f'{info.title}', callback_data=f'posting_{channelid}_{post_id}')])
-        except:
-            save_channels.append([InlineKeyboardButton(
-                f'Not Admin', callback_data=f'posting_{None}#{channelid}')])
-
-    text = f"🪴 **sᴇʟᴇᴄᴛ ᴄʜᴀɴɴᴇʟ ᴡʜᴇʀᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇɴᴅ ?**"
-
-    save_channels.append([InlineKeyboardButton(
-        f'sᴇɴᴅ ᴛᴏ ᴀʟʟ ᴄʜᴀɴɴᴇʟs', callback_data=f'allposting_{post_id}')])
-    await query.message.edit(text, reply_markup=InlineKeyboardMarkup(save_channels))
-
-
-@Client.on_callback_query(filters.regex(r'^posting_'))
-async def handle_single_posting(bot: Client, query: CallbackQuery):
-
-    time = await interval(bot, query)
-
-    await query.message.edit("**ᴘʀᴏᴄᴇssɪɴɢ ♻️...**")
-
-    if time != 0:
-        await query.message.delete()
-        ms = await query.message.reply_text(f"**ᴇᴀᴄʜ ᴘᴏsᴛ ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴀғᴛᴇʀ ᴇᴠᴇʀʏ {time}ʜʀ** ♻️")
-
-    _, channelid, postid = query.data.split("_")
-    userID = query.from_user.id
-    buttons = await db.get_buttons(userID)
-    save_button = []
-
-    if channelid.startswith("None"):
-        return query.message.edit("**⚠️ ғᴀɪʟᴅ ᴛᴏ sᴇɴᴅ ᴘᴏsᴛ**\n\nʀᴇᴀsᴏɴ :- ᴍᴀʏ ʙᴇ ɪ ᴀᴍ ɴᴏᴛ ᴀᴅᴍɪɴɢ ɪɴ ᴛʜᴀᴛ ᴄʜᴀɴɴᴇʟ")
-
-    if buttons:
-        for button in buttons:
+        for button in button:
             title, url = extract_title_and_url(button)
-            save_button.append(
+            btn.append(
                 [InlineKeyboardButton(f'{title}', url=f'{url}')])
-
-        if postid == "all":
-            all_posts = await db.get_posts(userID)
-            for post in all_posts:
-                if time != 0:
-                    asyncio.sleep(time * 3600)
-                    await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
-                    continue
-                else:
-                    await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
-
-        else:
-
-            await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
-
-    else:
-        if postid == "all":
-            all_posts = await db.get_posts(userID)
-
-            for post in all_posts:
-                if time != 0:
-                    await asyncio.sleep(time * 3600)
-                    await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post))
-
-                else:
-                    await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post))
-
-        else:
-
-            await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid))
     try:
-        if ms:
-            await ms.edit("**ᴘᴏsᴛ sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**")
-            return
+        if btn:
+            await bot.copy_message(user_id, Config.LOG_CHANNEL, post_id, reply_markup=InlineKeyboardMarkup(btn))
+        else:
+            await bot.copy_message(user_id, Config.LOG_CHANNEL, post_id)
+            
     except:
-        pass
-
-    await query.message.edit("**ᴘᴏsᴛ sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**")
+        await query.answer(f'ʜᴇʏ {query.from_user.mention},\n\n**ᴛʜᴇ ᴘᴏsᴛ ʏᴏᴜ ᴀʀᴇ ᴛʀʏɪɴɢ ᴛᴏ ᴠɪᴇᴡ ɪs ᴅᴇʟᴇᴛᴇᴅ ʙʏ ᴀᴅᴍɪɴ**', show_alert=True)
 
 
-@Client.on_callback_query(filters.regex(r'^allposting_'))
-async def handle_all_posting(bot: Client, query: CallbackQuery):
-    try:
-        await query.message.edit("**ᴘʀᴏᴄᴇssɪɴɢ ♻️...**")
-        postid = query.data.split("_")[1]
-        userID = query.from_user.id
-        channels = await db.get_channels(userID)
-        buttons = await db.get_buttons(userID)
-        total_posts = await db.get_posts(userID)
-        save_button = []
-        time = await interval(bot, query)
-        success = 0
-        faild = 0
-        total_channels = len(channels)
-
-        if time != 0:
-            await query.message.delete()
-            ms = await query.message.reply_text(f"**ᴇᴀᴄʜ ᴘᴏsᴛ ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴀғᴛᴇʀ ᴇᴠᴇʀʏ {time}ʜʀ** ♻️")
-
-        if buttons:
-            for button in buttons:
-                title, url = extract_title_and_url(button)
-                save_button.append(
-                    [InlineKeyboardButton(f'{title}', url=f'{url}')])
-
-        if postid == "all":
-            for post in total_posts:
-                if time != 0:
-                    await asyncio.sleep(time * 3600)
-                    for channelID in channels:
-                        try:
-                            if buttons:
-                                await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
-
-                            else:
-                                await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(post))
-
-                            success += 1
-                        except:
-                            pass
-                            faild += 1
-                    continue
-                else:
-
-                    for channelID in channels:
-                        try:
-                            if buttons:
-                                await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
-
-                            else:
-                                await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(post))
-
-                            success += 1
-                        except:
-                            pass
-                            faild += 1
-
-        else:
-            if time != 0:
-                await asyncio.sleep(time * 3600)
-                for channelID in channels:
-                    try:
-                        if buttons:
-                            await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
-                        else:
-                            await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postid))
-
-                        success += 1
-                    except:
-                        faild += 1
-
-            else:
-                for channelID in channels:
-                    try:
-                        if buttons:
-                            await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
-                        else:
-                            await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postid))
-
-                        success += 1
-                    except:
-                        faild += 1
-        try:
-            if ms:
-                await query.message.edit(f"**ᴘᴏsᴛ sᴇɴᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nsᴜᴄᴄᴇss :- {success}\nғᴀɪʟᴇᴅ :- {faild}\nᴛᴏᴛᴀʟ ᴄʜᴀɴɴᴇʟs :- {total_channels}")
-                return
-        except:
-            pass
-        await query.message.edit(f"**ᴘᴏsᴛ sᴇɴᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nsᴜᴄᴄᴇss :- {success}\nғᴀɪʟᴇᴅ :- {faild}\nᴛᴏᴛᴀʟ ᴄʜᴀɴɴᴇʟs :- {total_channels}")
-
-    except Exception as e:
-        print('Error on line {}'.format(
-            sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+    
