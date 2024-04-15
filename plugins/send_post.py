@@ -84,8 +84,7 @@ async def handle_single_posting(bot: Client, query: CallbackQuery):
     time = await interval(bot, query)
 
     await query.message.edit("**ᴘʀᴏᴄᴇssɪɴɢ ♻️...**")
-    
-    
+
     if time != 0:
         await query.message.delete()
         ms = await query.message.reply_text(f"**ᴇᴀᴄʜ ᴘᴏsᴛ ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴀғᴛᴇʀ ᴇᴠᴇʀʏ {time}ʜʀ** ♻️")
@@ -126,18 +125,20 @@ async def handle_single_posting(bot: Client, query: CallbackQuery):
                 if time != 0:
                     await asyncio.sleep(time * 3600)
                     await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post))
-                    
+
                 else:
                     await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post))
 
         else:
 
             await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid))
+    try:
+        if ms:
+            await ms.edit("**ᴘᴏsᴛ sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**")
+            return
+    except:
+        pass
 
-    if ms:
-        await ms.edit("**ᴘᴏsᴛ sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**")
-        return
-    
     await query.message.edit("**ᴘᴏsᴛ sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**")
 
 
@@ -211,7 +212,7 @@ async def handle_all_posting(bot: Client, query: CallbackQuery):
                         success += 1
                     except:
                         faild += 1
-                        
+
             else:
                 for channelID in channels:
                     try:
@@ -223,10 +224,12 @@ async def handle_all_posting(bot: Client, query: CallbackQuery):
                         success += 1
                     except:
                         faild += 1
-        if ms:
-            await query.message.edit(f"**ᴘᴏsᴛ sᴇɴᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nsᴜᴄᴄᴇss :- {success}\nғᴀɪʟᴇᴅ :- {faild}\nᴛᴏᴛᴀʟ ᴄʜᴀɴɴᴇʟs :- {total_channels}")
-            return
-    
+        try:
+            if ms:
+                await query.message.edit(f"**ᴘᴏsᴛ sᴇɴᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nsᴜᴄᴄᴇss :- {success}\nғᴀɪʟᴇᴅ :- {faild}\nᴛᴏᴛᴀʟ ᴄʜᴀɴɴᴇʟs :- {total_channels}")
+                return
+        except:
+            pass
         await query.message.edit(f"**ᴘᴏsᴛ sᴇɴᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nsᴜᴄᴄᴇss :- {success}\nғᴀɪʟᴇᴅ :- {faild}\nᴛᴏᴛᴀʟ ᴄʜᴀɴɴᴇʟs :- {total_channels}")
 
     except Exception as e:
