@@ -32,26 +32,44 @@ async def handle_send_post(bot: Client, message: Message):
     await message.reply_text(text, reply_markup=InlineKeyboardMarkup(buttons))
 
 
+async def detect_time(time, type):
+
+    if str(type).lower() == "h":
+        await asyncio.sleep(time * 3600)
+
+    elif str(type).lower() == "m":
+        await asyncio.sleep(time * 60)
+
+    elif str(type).lower() == "s":
+        await asyncio.sleep(time)
+
+
 async def interval(bot, query):
     try:
-        time_interval = await bot.ask(chat_id=query.from_user.id, text="Eɴᴛᴇʀ ᴛʜᴇ ɪɴᴛᴇʀᴠᴀʟ ᴏғ ᴛɪᴍᴇ. Cʜᴏᴏsᴇ ᴀɴʏ ɪɴᴛᴇɢᴇʀ ᴜɴᴅᴇʀ 24, ᴀɴᴅ ᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴀᴛ ᴛʜᴀᴛ ʜᴏᴜʀ. Fᴏʀ ᴇxᴀᴍᴘʟᴇ, ɪғ ʏᴏᴜ ᴇɴᴛᴇʀ 4, ᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴇᴠᴇʀʏ 4 ʜᴏᴜʀs ғᴏʀ ᴇᴀᴄʜ ᴘᴏsᴛ.\n\n/cancel - cancel this process")
+        time_interval = await bot.ask(chat_id=query.from_user.id, text="Eɴᴛᴇʀ ᴛʜᴇ ɪɴᴛᴇʀᴠᴀʟ ᴏғ ᴛɪᴍᴇ. Cʜᴏᴏsᴇ ᴀɴʏ ɪɴᴛᴇɢᴇʀ ᴜɴᴅᴇʀ 24, ᴀɴᴅ ᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴀᴛ ᴛʜᴀᴛ ʜᴏᴜʀ ᴏʀ ᴍɪɴᴜᴛᴇs. Fᴏʀ ᴇxᴀᴍᴘʟᴇ, ɪғ ʏᴏᴜ ᴇɴᴛᴇʀ `4ᴍ` ᴏʀ `4ʜ` ᴏʀ `4s`, ᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴇᴠᴇʀʏ `4 ʜᴏᴜʀs ᴏʀ` `4 ᴍɪɴᴜᴛᴇs` ᴏʀ `4 sᴇᴄᴏɴᴅs` ʀᴇsᴘᴇᴄᴛɪᴠᴇʟʏ ғᴏʀ ᴇᴀᴄʜ ᴘᴏsᴛ.\n\n/cancel - cancel this process")
     except ListenerTimeout:
         await query.message.reply_text("**Rᴇǫᴜᴇsᴛ Tɪᴍᴇᴏᴜᴛ !**\n\nYᴏᴜʀ ᴀʀᴇ ᴛᴀᴋɪɴɢ ᴛᴏᴏ ʟᴏɴɢ ᴛᴏ sᴇɴᴅ")
         return 0
-
+    
     if time_interval.text == "/cancel":
         await query.message.reply_text("<b>process canceled</b>",)
         return 0
 
-    elif not str(time_interval.text).isnumeric():
+    elif not str(time_interval.text[:-1]).isnumeric():
         await query.message.reply_text("**Iɴᴠᴀʟɪᴅ Fᴏʀᴍᴀᴛ !**")
         return 0
-
-    elif int(time_interval.text) > 24:
+        
+    
+    elif int(time_interval.text[:-1]) > 24:
         await query.message.reply_text("☘️ **sᴇɴᴅ ɴᴜᴍʙᴇʀ ᴜɴᴅᴇʀ 24**")
         return 0
+
+    elif str(time_interval.text).lower().endswith('h') or str(time_interval.text).lower().endswith('m') or str(time_interval.text).lower().endswith('s'):
+        return int(time_interval.text[:-1]), time_interval.text[-1]
+
     else:
-        return int(time_interval.text)
+        await query.message.reply_text("**Iɴᴠᴀʟɪᴅ Fᴏʀᴍᴀᴛ !**")
+        return 0
 
 
 @Client.on_callback_query(filters.regex(r'^send_'))
@@ -81,13 +99,13 @@ async def handle_query_send(bot: Client, query: CallbackQuery):
 @Client.on_callback_query(filters.regex(r'^posting_'))
 async def handle_single_posting(bot: Client, query: CallbackQuery):
 
-    time = await interval(bot, query)
+    time, typ = await interval(bot, query)
 
     await query.message.edit("**ᴘʀᴏᴄᴇssɪɴɢ ♻️...**")
 
     if time != 0:
         await query.message.delete()
-        ms = await query.message.reply_text(f"**ᴇᴀᴄʜ ᴘᴏsᴛ ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴀғᴛᴇʀ ᴇᴠᴇʀʏ {time}ʜʀ** ♻️")
+        ms = await query.message.reply_text(f"**ᴇᴀᴄʜ ᴘᴏsᴛ ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴀғᴛᴇʀ ᴇᴠᴇʀʏ {time}{typ}** ♻️")
 
     _, channelid, postid = query.data.split("_")
     userID = query.from_user.id
@@ -107,7 +125,7 @@ async def handle_single_posting(bot: Client, query: CallbackQuery):
             all_posts = await db.get_posts(userID)
             for post in all_posts:
                 if time != 0:
-                    asyncio.sleep(time * 3600)
+                    await detect_time(time, typ)
                     await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
                     continue
                 else:
@@ -115,9 +133,9 @@ async def handle_single_posting(bot: Client, query: CallbackQuery):
 
         else:
             if time != 0:
-                asyncio.sleep(time * 3600)
+                await detect_time(time, typ)
                 await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
-            else:            
+            else:
                 await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
 
     else:
@@ -126,7 +144,7 @@ async def handle_single_posting(bot: Client, query: CallbackQuery):
 
             for post in all_posts:
                 if time != 0:
-                    await asyncio.sleep(time * 3600)
+                    await detect_time(time, typ)
                     await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post))
 
                 else:
@@ -134,7 +152,7 @@ async def handle_single_posting(bot: Client, query: CallbackQuery):
 
         else:
             if time != 0:
-                await asyncio.sleep(time * 3600)
+                await detect_time(time, typ)
                 await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid))
             else:
                 await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid))
@@ -158,14 +176,14 @@ async def handle_all_posting(bot: Client, query: CallbackQuery):
         buttons = await db.get_buttons(userID)
         total_posts = await db.get_posts(userID)
         save_button = []
-        time = await interval(bot, query)
+        time, typ = await interval(bot, query)
         success = 0
         faild = 0
         total_channels = len(channels)
 
         if time != 0:
             await query.message.delete()
-            ms = await query.message.reply_text(f"**ᴇᴀᴄʜ ᴘᴏsᴛ ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴀғᴛᴇʀ ᴇᴠᴇʀʏ {time}ʜʀ** ♻️")
+            ms = await query.message.reply_text(f"**ᴇᴀᴄʜ ᴘᴏsᴛ ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴀғᴛᴇʀ ᴇᴠᴇʀʏ {time}{typ}** ♻️")
 
         if buttons:
             for button in buttons:
@@ -176,7 +194,7 @@ async def handle_all_posting(bot: Client, query: CallbackQuery):
         if postid == "all":
             for post in total_posts:
                 if time != 0:
-                    await asyncio.sleep(time * 3600)
+                    await detect_time(time, typ)
                     for channelID in channels:
                         try:
                             if buttons:
@@ -207,7 +225,7 @@ async def handle_all_posting(bot: Client, query: CallbackQuery):
 
         else:
             if time != 0:
-                await asyncio.sleep(time * 3600)
+                await detect_time(time, typ)
                 for channelID in channels:
                     try:
                         if buttons:
