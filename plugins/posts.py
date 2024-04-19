@@ -68,8 +68,10 @@ async def handle_delete_post(bot: Client, query: CallbackQuery):
     user_id = query.from_user.id
     post_id = query.data.split('_')[1]
     await db.del_post(user_id, int(post_id))
-
-    await bot.delete_messages(int(Config.LOG_CHANNEL), int(post_id))
+    try:
+        await bot.delete_messages(int(Config.LOG_CHANNEL), int(post_id))
+    except Exception as e:
+        print(e)
 
     text, btn = await handle_post(user_id)
     await query.message.edit(text=text, reply_markup=InlineKeyboardMarkup(btn))
@@ -109,7 +111,7 @@ async def handle_showposts(bot: Client, query: CallbackQuery):
 async def handle_forward(bot: Client, message: Message):
 
     chat_id = message.from_user.id
-    await bot.copy_message(Config.LOG_CHANNEL, chat_id, message.id)
-    await db.set_posts(chat_id, message.id)
+    post_id = await bot.copy_message(Config.LOG_CHANNEL, chat_id, message.id)
+    await db.set_posts(chat_id, post_id.id)
     
     await message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**", reply_to_message_id=message.id)
