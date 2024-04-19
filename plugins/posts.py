@@ -39,17 +39,24 @@ async def handle_add_post(bot: Client, query: CallbackQuery):
     
     await query.message.delete()
     chat_id = query.message.chat.id
-    try:
-        post = await bot.ask(chat_id=chat_id, text="**(FORWARD ME POST)**\n\nғᴏʀᴡᴀʀᴅ ᴍᴇ ᴛʜᴇ ᴘᴏsᴛ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴀᴛ ᴛᴏ sᴀᴠᴇ", filters=filters.forwarded, timeout=30)
-    except ListenerTimeout:
-        await query.message.reply_text("ʀᴇǫᴜᴇsᴛ ᴛɪᴍᴇ ᴏᴜᴛ !\n\n**⚠️ ʏᴏᴜ ᴀʀᴇ ᴛᴀᴋɪɴɢ ᴛᴏᴏ ʟᴏɴɢ ᴛᴏ ғᴏʀᴡᴀʀᴅ ᴘᴏsᴛ**")
 
-    
-    post_id = await bot.copy_message(Config.LOG_CHANNEL, chat_id, post.id)
+    while True:
+        try:
+            post = await bot.ask(chat_id=chat_id, text="**(FORWARD ME POST)**\n\nғᴏʀᴡᴀʀᴅ ᴍᴇ ᴛʜᴇ ᴘᴏsᴛ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴀᴛ ᴛᴏ sᴀᴠᴇ", timeout=60)
+        except ListenerTimeout:
+            await query.message.reply_text("ʀᴇǫᴜᴇsᴛ ᴛɪᴍᴇ ᴏᴜᴛ !\n\n**⚠️ ʏᴏᴜ ᴀʀᴇ ᴛᴀᴋɪɴɢ ᴛᴏᴏ ʟᴏɴɢ ᴛᴏ ғᴏʀᴡᴀʀᴅ ᴘᴏsᴛ**")
 
-    await db.set_posts(chat_id, post_id.id)
-    
-    await query.message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nᴜsᴇ /my_posts ᴛᴏ ᴠɪᴇᴡ ᴀʟʟ ʏᴏᴜʀ ᴘᴏsᴛs", reply_to_message_id=post.id)
+        if post.text == '/cancel':
+            await bot.send_message(chat_id, text="**Process canceled successfully**")
+            await bot.send_message(chat_id, "👁️ ᴠɪᴇᴡ ᴀʟʟ ʏᴏᴜʀ ᴘᴏsᴛs", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('ᴠɪᴇᴡ ᴘᴏsᴛs', callback_data='showposts')]]))
+            break
+        
+
+        post_id = await bot.copy_message(Config.LOG_CHANNEL, chat_id, post.id)
+        await db.set_posts(chat_id, post_id.id)
+        
+        await query.message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nᴜsᴇ /cancel to stop the process", reply_to_message_id=post.id)
+        continue
 
 @Client.on_callback_query(filters.regex(r'^delpost_'))
 async def handle_delete_post(bot: Client, query: CallbackQuery):
@@ -86,3 +93,9 @@ async def handle_view_post(bot: Client, query: CallbackQuery):
 
 
     
+@Client.on_callback_query(filters.regex(r'^showposts'))
+async def handle_showposts(bot: Client, query:CallbackQuery):
+    
+    user_id = query.from_user.id
+    text, btn = await handle_post(user_id)
+    await query.message.edit(text=text, reply_markup=InlineKeyboardMarkup(btn))
