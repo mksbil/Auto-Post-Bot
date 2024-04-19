@@ -3,10 +3,15 @@ from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, 
 from helper.database import db
 from helper.utils import extract_title_and_url
 from pyromod.exceptions import ListenerTimeout
-from config import Config
+from config import Config, temp
 
 
 async def handle_post(user_id):
+    if user_id in temp.CHNLID:
+        for id in temp.CHNLID.get(user_id):
+            await db.set_posts(user_id, id)
+        temp.CHNLID.pop(user_id)
+
     posts = await db.get_posts(user_id)
     btn = []
     text = ""
@@ -32,9 +37,10 @@ async def handle_post(user_id):
 
 @Client.on_message(filters.private & filters.command('my_posts'))
 async def handle_my_posts(bot: Client, message: Message):
-
+    ms = await message.reply_text("**Please Wait...**")
     user_id = message.from_user.id
     text, btn = await handle_post(user_id)
+    await ms.delete()
     await message.reply_text(text=text, reply_markup=InlineKeyboardMarkup(btn))
 
 
@@ -110,11 +116,14 @@ async def handle_showposts(bot: Client, query: CallbackQuery):
 @Client.on_message(filters.private & filters.forwarded)
 async def handle_forward(bot: Client, message: Message):
 
+    if message.from_user.id not in temp.CHNLID:
+        temp.CHNLID.update({message.from_user.id: []})
+
     try:
+
         chat_id = message.from_user.id
         post_id = await bot.copy_message(Config.LOG_CHANNEL, chat_id, message.id)
-        await db.set_posts(chat_id, post_id.id)
-        
+        temp.CHNLID.get(message.from_user.id).append(post_id.id)
         await message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**", reply_to_message_id=message.id)
     except Exception as e:
         print(e)
