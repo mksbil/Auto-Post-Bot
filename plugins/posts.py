@@ -60,38 +60,41 @@ async def handle_add_post(bot: Client, query: CallbackQuery):
 
 @Client.on_callback_query(filters.regex(r'^delpost_'))
 async def handle_delete_post(bot: Client, query: CallbackQuery):
-    
-    user_id = query.from_user.id
-    post_id = query.data.split('_')[1]
-    await db.del_post(user_id, int(post_id))
-    
-    await bot.delete_messages(int(Config.LOG_CHANNEL), int(post_id))
-    
-    text, btn = await handle_post(user_id)
-    await query.message.edit(text=text, reply_markup=InlineKeyboardMarkup(btn))
-    
+    try:
+        user_id = query.from_user.id
+        post_id = query.data.split('_')[1]
+        await db.del_post(user_id, int(post_id))
+        
+        await bot.delete_messages(int(Config.LOG_CHANNEL), int(post_id))
+        
+        text, btn = await handle_post(user_id)
+        await query.message.edit(text=text, reply_markup=InlineKeyboardMarkup(btn))
+    except Exception as e:
+        print(e)
 @Client.on_callback_query(filters.regex(r'^viewpost_'))
 async def handle_view_post(bot: Client, query: CallbackQuery):
-    post_id = int(query.data.split('_')[1])
-    user_id = query.from_user.id
-    save_buttons = await db.get_buttons(user_id)
-    btn = []
-    if save_buttons:
-
-        for button in button:
-            title, url = extract_title_and_url(button)
-            btn.append(
-                [InlineKeyboardButton(f'{title}', url=f'{url}')])
     try:
-        if btn:
-            await bot.copy_message(user_id, Config.LOG_CHANNEL, post_id, reply_markup=InlineKeyboardMarkup(btn))
-        else:
-            await bot.copy_message(user_id, Config.LOG_CHANNEL, post_id)
-            
-    except:
-        await query.answer(f'ʜᴇʏ {query.from_user.mention},\n\n**ᴛʜᴇ ᴘᴏsᴛ ʏᴏᴜ ᴀʀᴇ ᴛʀʏɪɴɢ ᴛᴏ ᴠɪᴇᴡ ɪs ᴅᴇʟᴇᴛᴇᴅ ʙʏ ᴀᴅᴍɪɴ**', show_alert=True)
+        post_id = int(query.data.split('_')[1])
+        user_id = query.from_user.id
+        save_buttons = await db.get_buttons(user_id)
+        btn = []
+        if save_buttons:
 
+            for button in button:
+                title, url = extract_title_and_url(button)
+                btn.append(
+                    [InlineKeyboardButton(f'{title}', url=f'{url}')])
+        try:
+            if btn:
+                await bot.copy_message(user_id, Config.LOG_CHANNEL, post_id, reply_markup=InlineKeyboardMarkup(btn))
+            else:
+                await bot.copy_message(user_id, Config.LOG_CHANNEL, post_id)
+                
+        except:
+            await query.answer(f'ʜᴇʏ {query.from_user.mention},\n\n**ᴛʜᴇ ᴘᴏsᴛ ʏᴏᴜ ᴀʀᴇ ᴛʀʏɪɴɢ ᴛᴏ ᴠɪᴇᴡ ɪs ᴅᴇʟᴇᴛᴇᴅ ʙʏ ᴀᴅᴍɪɴ**', show_alert=True)
 
+    except Exception as e:
+        print(e)
     
 @Client.on_callback_query(filters.regex(r'^showposts'))
 async def handle_showposts(bot: Client, query:CallbackQuery):
