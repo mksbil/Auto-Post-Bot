@@ -110,8 +110,11 @@ async def handle_showposts(bot: Client, query: CallbackQuery):
 @Client.on_message(filters.private & filters.forwarded)
 async def handle_forward(bot: Client, message: Message):
 
-    chat_id = message.from_user.id
-    post_id = await bot.copy_message(Config.LOG_CHANNEL, chat_id, message.id)
-    await db.set_posts(chat_id, post_id.id)
-    
-    await message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**", reply_to_message_id=message.id)
+    try:
+        chat_id = message.from_user.id
+        post_id = await bot.copy_message(Config.LOG_CHANNEL, chat_id, message.id)
+        await db.set_posts(chat_id, post_id.id)
+        
+        await message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**", reply_to_message_id=message.id)
+    except Exception as e:
+        print(e)
