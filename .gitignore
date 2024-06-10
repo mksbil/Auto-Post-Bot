@@ -1,0 +1,13 @@
+# Ignore environment folder
+env/
+
+# Ignore Python cache files
+__pycache__/
+
+# Ignore specific session files
+Snowball.session
+Snowball.session-journal
+
+# Ignore log files and downloads folder
+TelegramBot.log
+downloads/

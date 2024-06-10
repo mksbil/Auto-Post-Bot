@@ -7,22 +7,28 @@ id_pattern = re.compile(r'^.\d+$')
 
 class Config(object):
     # pyro client config
-    API_ID = os.environ.get("API_ID", "")  # ⚠️ Required
-    API_HASH = os.environ.get("API_HASH", "")  # ⚠️ Required
-    BOT_TOKEN = os.environ.get("BOT_TOKEN", "")  # ⚠️ Required
-    BOT_USERNAME = os.environ.get("BOT_USERNAME", "")  # ⚠️ Required
+    API_ID = os.environ.get("API_ID", "21288218")  # ⚠️ Required
+    API_HASH = os.environ.get(
+        "API_HASH", "dd47d5c4fbc31534aa764ef9918b3acd")  # ⚠️ Required
+    BOT_TOKEN = os.environ.get(
+        "BOT_TOKEN", "7074407315:AAGgXmXzG_RrcQM2WFg8N5HSxPmSFrgB874")  # ⚠️ Required
+    BOT_USERNAME = os.environ.get("BOT_USERNAME", "TzingBot")  # ⚠️ Required
 
     # database config
-    DB_URL = os.environ.get("DB_URL", "")  # ⚠️ Required
+    DB_URL = os.environ.get(
+        "DB_URL", "mongodb://localhost:27017")  # ⚠️ Required
 
     # other configs
     BOT_UPTIME = time.time()
-    START_PIC = os.environ.get("START_PIC", "https://graph.org/file/e30efcd2b42b81749996c.jpg")
-    ADMIN = [int(admin) if id_pattern.search(admin) else admin for admin in os.environ.get('ADMIN', '').split()]  # ⚠️ Required
-    FORCE_SUB = os.environ.get('FORCE_SUB', '')  # ⚠️ Required without [@]
-    LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", ""))  # ⚠️ Required
+    START_PIC = os.environ.get(
+        "START_PIC", "https://graph.org/file/e30efcd2b42b81749996c.jpg")
+    ADMIN = [int(admin) if id_pattern.search(admin) else admin for admin in os.environ.get(
+        'ADMIN', '6065594762').split()]  # ⚠️ Required
+    # ⚠️ Required without [@]
+    FORCE_SUB = os.environ.get('FORCE_SUB', 'Kdramaland')
+    LOG_CHANNEL = int(os.environ.get(
+        "LOG_CHANNEL", "-1001971176803"))  # ⚠️ Required
 
-    
     # wes response configuration
     WEBHOOK = bool(os.environ.get("WEBHOOK", True))
     PORT = int(os.environ.get("PORT", "8080"))
@@ -67,6 +73,7 @@ Tʜɪs Bᴏᴛ Wɪʟʟ Hᴇʟᴘ Yᴏᴜ Tᴏ Sᴇɴᴅ Pᴏsᴛs Tᴏ Yᴏᴜʀ
 ╚══════════════════❍⊱❁۪۪        
 """
 
+
 class temp(object):
-    
-    CHNLID = {}
+
+    POST_ID = {}

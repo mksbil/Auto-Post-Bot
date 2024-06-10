@@ -3,32 +3,49 @@ import sys
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from helper.database import db
-from config import Config
+from config import Config, temp
 from helper.utils import extract_title_and_url
 from pyromod.exceptions import ListenerTimeout
+
+
+def posts(userID, channelID, time, typ):
+
+    postList = temp.POST_ID.get(userID)
+
+    postBTN = []
+
+    for idx, postID in enumerate(postList):
+        postBTN.append([InlineKeyboardButton(
+            f'POST {idx+1}', callback_data=f'viewpost_{postID}'), InlineKeyboardButton(f'ᴅᴇʟᴇᴛᴇ', callback_data=f'delpost_{postID}_{channelID}_{time}_{typ}')])
+
+    postBTN.append([InlineKeyboardButton(
+        'sᴇɴᴅ', callback_data=f'finally_send_{channelID}_{time}_{typ}')])
+    postBTN.append([InlineKeyboardButton(
+        'ᴄᴀɴᴄᴇʟ', callback_data='finally_cancle')])
+    return InlineKeyboardMarkup(postBTN)
 
 
 @Client.on_message(filters.private & filters.command('send_post'))
 async def handle_send_post(bot: Client, message: Message):
     user_id = message.from_user.id
-    posts = await db.get_posts(user_id)
     channels = await db.get_channels(user_id)
-    if not posts:
-        return await message.reply_text("**ʏᴏᴜ ᴅɪᴅɴ'ᴛ ʜᴀᴠᴇ ᴀᴅᴅᴇᴅ ᴀɴʏ ᴘᴏsᴛ ʏᴇᴛ ᴜsᴇ /my_posts ᴛᴏ ᴀᴅᴅ ʏᴏᴜʀ ᴘᴏsᴛ !**", reply_to_message_id=message.id)
 
     if not channels:
         return await message.reply_text("**ʏᴏᴜ ᴅɪᴅɴ'ᴛ ʜᴀᴠᴇ ᴀᴅᴅᴇᴅ ᴀɴʏ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ ᴜsᴇ /my_channels ᴛᴏ ᴀᴅᴅ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟ !**", reply_to_message_id=message.id)
 
     buttons = []
 
-    for idx, post in enumerate(posts):
-        buttons.append([InlineKeyboardButton(
-            f'ᴘᴏsᴛ {idx+1}', callback_data=f'send_{post}')])
+    for channelid in channels:
+        try:
+            info = await bot.get_chat(int(channelid))
+            buttons.append([InlineKeyboardButton(
+                f'{info.title}', callback_data=f'posting_{channelid}')])
+        except:
+            buttons.append([InlineKeyboardButton(
+                f'Not Admin', callback_data=f'posting_{None}#{channelid}')])
 
-    text = f"🛻 **sᴇʟᴇᴄᴛ ʏᴏᴜʀ ᴘᴏsᴛ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇɴᴅ ?**"
+    text = f"🪴 **sᴇʟᴇᴄᴛ ᴄʜᴀɴɴᴇʟ ᴡʜᴇʀᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇɴᴅ ?**"
 
-    buttons.append([InlineKeyboardButton(
-        f'sᴇʟᴇᴄᴛ ᴀʟʟ ᴘᴏsᴛs', callback_data=f'send_all')])
     await message.reply_text(text, reply_markup=InlineKeyboardMarkup(buttons))
 
 
@@ -50,7 +67,7 @@ async def interval(bot, query):
     except ListenerTimeout:
         await query.message.reply_text("**Rᴇǫᴜᴇsᴛ Tɪᴍᴇᴏᴜᴛ !**\n\nYᴏᴜʀ ᴀʀᴇ ᴛᴀᴋɪɴɢ ᴛᴏᴏ ʟᴏɴɢ ᴛᴏ sᴇɴᴅ")
         return 0
-    
+
     if time_interval.text == "/cancel":
         await query.message.reply_text("<b>process canceled</b>",)
         return 0
@@ -58,8 +75,7 @@ async def interval(bot, query):
     elif not str(time_interval.text[:-1]).isnumeric():
         await query.message.reply_text("**Iɴᴠᴀʟɪᴅ Fᴏʀᴍᴀᴛ !**")
         return 0
-        
-    
+
     elif int(time_interval.text[:-1]) > 24:
         await query.message.reply_text("☘️ **sᴇɴᴅ ɴᴜᴍʙᴇʀ ᴜɴᴅᴇʀ 24**")
         return 0
@@ -72,190 +88,125 @@ async def interval(bot, query):
         return 0
 
 
-@Client.on_callback_query(filters.regex(r'^send_'))
-async def handle_query_send(bot: Client, query: CallbackQuery):
-    await query.message.edit("**ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...**")
-    user_id = query.from_user.id
-    channels = await db.get_channels(user_id)
-    post_id = query.data.split('_')[1]
-    save_channels = []
-
-    for channelid in channels:
-        try:
-            info = await bot.get_chat(channelid)
-            save_channels.append([InlineKeyboardButton(
-                f'{info.title}', callback_data=f'posting_{channelid}_{post_id}')])
-        except:
-            save_channels.append([InlineKeyboardButton(
-                f'Not Admin', callback_data=f'posting_{None}#{channelid}')])
-
-    text = f"🪴 **sᴇʟᴇᴄᴛ ᴄʜᴀɴɴᴇʟ ᴡʜᴇʀᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇɴᴅ ?**"
-
-    save_channels.append([InlineKeyboardButton(
-        f'sᴇɴᴅ ᴛᴏ ᴀʟʟ ᴄʜᴀɴɴᴇʟs', callback_data=f'allposting_{post_id}')])
-    await query.message.edit(text, reply_markup=InlineKeyboardMarkup(save_channels))
-
-
 @Client.on_callback_query(filters.regex(r'^posting_'))
 async def handle_single_posting(bot: Client, query: CallbackQuery):
 
+    await query.message.delete()
+    channelID = query.data.split('_')[1]
     time, typ = await interval(bot, query)
-
-    await query.message.edit("**ᴘʀᴏᴄᴇssɪɴɢ ♻️...**")
-
-    if time != 0:
-        await query.message.delete()
-        ms = await query.message.reply_text(f"**ᴇᴀᴄʜ ᴘᴏsᴛ ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴀғᴛᴇʀ ᴇᴠᴇʀʏ {time}{typ}** ♻️")
-
-    _, channelid, postid = query.data.split("_")
+    chat_id = query.message.chat.id
     userID = query.from_user.id
-    buttons = await db.get_buttons(userID)
-    save_button = []
 
-    if channelid.startswith("None"):
-        return query.message.edit("**⚠️ ғᴀɪʟᴅ ᴛᴏ sᴇɴᴅ ᴘᴏsᴛ**\n\nʀᴇᴀsᴏɴ :- ᴍᴀʏ ʙᴇ ɪ ᴀᴍ ɴᴏᴛ ᴀᴅᴍɪɴɢ ɪɴ ᴛʜᴀᴛ ᴄʜᴀɴɴᴇʟ")
+    while True:
+        try:
+            post = await bot.ask(chat_id=chat_id, text="**(FORWARD ME POST)**\n\nғᴏʀᴡᴀʀᴅ ᴍᴇ ᴛʜᴇ ᴘᴏsᴛ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴀᴛ ᴛᴏ sᴀᴠᴇ", timeout=60)
+        except ListenerTimeout:
+            await query.message.reply_text("ʀᴇǫᴜᴇsᴛ ᴛɪᴍᴇ ᴏᴜᴛ !\n\n**⚠️ ʏᴏᴜ ᴀʀᴇ ᴛᴀᴋɪɴɢ ᴛᴏᴏ ʟᴏɴɢ ᴛᴏ ғᴏʀᴡᴀʀᴅ ᴘᴏsᴛ**")
+        if post.text == '/cancel':
+            if channelID == None:
+                return await bot.send_message(chat_id, f"** ⚠️ ᴍᴀᴋᴇ sᴜʀᴇ ʙᴏᴛ ɪs ᴀᴅᴍɪɴ ɪɴ ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ ** \n\nᴄʜᴀᴛ ɪᴅ: `{query.data.split('#')[1]}` ")
+            else:
+                info = await bot.get_chat(chat_id=int(channelID))
+                text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
+                markup = posts(userID, channelID, time, typ)
+                await bot.send_message(chat_id, text, reply_markup=markup)
+            break
 
-    if buttons:
-        for button in buttons:
-            title, url = extract_title_and_url(button)
-            save_button.append(
-                [InlineKeyboardButton(f'{title}', url=f'{url}')])
+        post_id = await bot.copy_message(Config.LOG_CHANNEL, chat_id, post.id)
 
-        if postid == "all":
-            all_posts = await db.get_posts(userID)
-            for post in all_posts:
-                if time != 0:
-                    await detect_time(time, typ)
-                    await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
-                    continue
-                else:
-                    await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
+        if userID not in temp.POST_ID:
+            temp.POST_ID.update({userID: []})
+            temp.POST_ID.get(userID).append(post_id.id)
 
         else:
-            if time != 0:
-                await detect_time(time, typ)
-                await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
-            else:
-                await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
+            temp.POST_ID.get(userID).append(post_id.id)
+
+        await query.message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nᴜsᴇ /cancel to stop the process", reply_to_message_id=post.id)
+        continue
+
+
+@Client.on_callback_query(filters.regex(r'^viewpost_'))
+async def handle_view_post(bot: Client, query: CallbackQuery):
+    post_id = int(query.data.split('_')[1])
+    user_id = query.from_user.id
+    save_buttons = await db.get_buttons(user_id)
+    btn = []
+    if save_buttons:
+
+        for button in save_buttons:
+            title, url = extract_title_and_url(button)
+            btn.append(
+                [InlineKeyboardButton(f'{title}', url=f'{url}')])
+    try:
+        if btn:
+            await bot.copy_message(user_id, Config.LOG_CHANNEL, post_id, reply_markup=InlineKeyboardMarkup(btn))
+        else:
+            await bot.copy_message(user_id, Config.LOG_CHANNEL, post_id)
+
+    except:
+        await query.answer(f'ʜᴇʏ {query.from_user.mention},\n\n**ᴛʜᴇ ᴘᴏsᴛ ʏᴏᴜ ᴀʀᴇ ᴛʀʏɪɴɢ ᴛᴏ ᴠɪᴇᴡ ɪs ᴅᴇʟᴇᴛᴇᴅ ʙʏ ᴀᴅᴍɪɴ**', show_alert=True)
+
+
+@Client.on_callback_query(filters.regex(r'^delpost_'))
+async def handle_delete_post(bot: Client, query: CallbackQuery):
+
+    user_id = query.from_user.id
+    post_id = query.data.split('_')[1]
+    channel_id = query.data.split('_')[2]
+    time = query.data.split('_')[3]
+    typ = query.data.split('_')[4]
+    try:
+        await bot.delete_messages(int(Config.LOG_CHANNEL), int(post_id))
+        temp.POST_ID[user_id].remove(int(post_id))
+    except Exception as e:
+        print(e)
+
+    info = await bot.get_chat(chat_id=int(channel_id))
+    text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
+    markup = posts(user_id, channel_id, time, typ)
+    await query.message.edit(text=text, reply_markup=markup)
+
+
+@Client.on_callback_query((filters.regex(r'^finally_')))
+async def handle_finally_post(bot: Client, query: CallbackQuery):
+
+    option = query.data.split('_')[1]
+    chat_id = query.message.chat.id
+    userID = query.from_user.id
+
+    if option == 'cancle':
+        await query.message.delete()
+        temp.POST_ID.pop(userID)
+        return await bot.send_message(chat_id, text="**Process canceled successfully**")
 
     else:
-        if postid == "all":
-            all_posts = await db.get_posts(userID)
-
-            for post in all_posts:
-                if time != 0:
-                    await detect_time(time, typ)
-                    await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post))
-
-                else:
-                    await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(post))
-
-        else:
-            if time != 0:
-                await detect_time(time, typ)
-                await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid))
-            else:
-                await bot.copy_message(int(channelid), Config.LOG_CHANNEL, int(postid))
-    try:
-        if ms:
-            await ms.edit("**ᴘᴏsᴛ sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**")
-            return
-    except:
-        pass
-
-    await query.message.edit("**ᴘᴏsᴛ sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**")
-
-
-@Client.on_callback_query(filters.regex(r'^allposting_'))
-async def handle_all_posting(bot: Client, query: CallbackQuery):
-    try:
-        await query.message.edit("**ᴘʀᴏᴄᴇssɪɴɢ ♻️...**")
-        postid = query.data.split("_")[1]
-        userID = query.from_user.id
-        channels = await db.get_channels(userID)
+        await query.message.edit("** ᴠᴇʀɪғʏɪɴɢ ᴅᴀᴛᴀ ... **")
+        channelID = query.data.split('_')[2]
+        time = int(query.data.split('_')[3])
+        typ = query.data.split('_')[4]
+        info = await bot.get_chat(int(channelID))
         buttons = await db.get_buttons(userID)
-        total_posts = await db.get_posts(userID)
-        save_button = []
-        time, typ = await interval(bot, query)
-        success = 0
-        faild = 0
-        total_channels = len(channels)
-
-        if time != 0:
-            await query.message.delete()
-            ms = await query.message.reply_text(f"**ᴇᴀᴄʜ ᴘᴏsᴛ ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴀғᴛᴇʀ ᴇᴠᴇʀʏ {time}{typ}** ♻️")
-
+        saveBTN = []
+        await query.message.edit(f"** ᴘᴏsᴛs ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴛᴏ {info.title} ᴀғᴛᴇʀ {time}{typ} ᴅᴇʟᴀʏ ** ♻️")
         if buttons:
-            for button in buttons:
-                title, url = extract_title_and_url(button)
-                save_button.append(
-                    [InlineKeyboardButton(f'{title}', url=f'{url}')])
+            for btn in buttons:
+                text, url = extract_title_and_url(btn)
+                saveBTN.append([InlineKeyboardButton(text, url=url)])
 
-        if postid == "all":
-            for post in total_posts:
+            for postID in temp.POST_ID[userID]:
                 if time != 0:
                     await detect_time(time, typ)
-                    for channelID in channels:
-                        try:
-                            if buttons:
-                                await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
-
-                            else:
-                                await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(post))
-
-                            success += 1
-                        except:
-                            pass
-                            faild += 1
-                    continue
+                    await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postID), reply_markup=InlineKeyboardMarkup(saveBTN))
                 else:
-
-                    for channelID in channels:
-                        try:
-                            if buttons:
-                                await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(post), reply_markup=InlineKeyboardMarkup(save_button))
-
-                            else:
-                                await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(post))
-
-                            success += 1
-                        except:
-                            pass
-                            faild += 1
-
+                    await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postID), reply_markup=InlineKeyboardMarkup(saveBTN))
         else:
-            if time != 0:
-                await detect_time(time, typ)
-                for channelID in channels:
-                    try:
-                        if buttons:
-                            await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
-                        else:
-                            await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postid))
+            for postID in temp.POST_ID[userID]:
+                if time != 0:
+                    await detect_time(time, typ)
+                    await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postID))
+                else:
+                    await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postID))
 
-                        success += 1
-                    except:
-                        faild += 1
-
-            else:
-                for channelID in channels:
-                    try:
-                        if buttons:
-                            await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postid), reply_markup=InlineKeyboardMarkup(save_button))
-                        else:
-                            await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postid))
-
-                        success += 1
-                    except:
-                        faild += 1
-        try:
-            if ms:
-                await query.message.edit(f"**ᴘᴏsᴛ sᴇɴᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nsᴜᴄᴄᴇss :- {success}\nғᴀɪʟᴇᴅ :- {faild}\nᴛᴏᴛᴀʟ ᴄʜᴀɴɴᴇʟs :- {total_channels}")
-                return
-        except:
-            pass
-        await query.message.edit(f"**ᴘᴏsᴛ sᴇɴᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nsᴜᴄᴄᴇss :- {success}\nғᴀɪʟᴇᴅ :- {faild}\nᴛᴏᴛᴀʟ ᴄʜᴀɴɴᴇʟs :- {total_channels}")
-
-    except Exception as e:
-        print('Error on line {}'.format(
-            sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        await query.message.delete()
+        temp.POST_ID.pop(userID)
+        await query.message.reply_text(f" ** ᴘᴏsᴛs ʜᴀs ʙᴇᴇɴ sᴇɴᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ᴛᴏ {info.title} ** ✅")
