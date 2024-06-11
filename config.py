@@ -70,3 +70,5 @@ Tʜɪs Bᴏᴛ Wɪʟʟ Hᴇʟᴘ Yᴏᴜ Tᴏ Sᴇɴᴅ Pᴏsᴛs Tᴏ Yᴏᴜʀ
 class temp(object):
 
     POST_ID = {}
+    STORE_DATA = {}
+    BOOL_ADDPOST = {}
