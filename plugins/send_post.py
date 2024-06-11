@@ -97,32 +97,17 @@ async def handle_single_posting(bot: Client, query: CallbackQuery):
     chat_id = query.message.chat.id
     userID = query.from_user.id
 
-    while True:
-        try:
-            post = await bot.ask(chat_id=chat_id, text="**(FORWARD ME POST)**\n\nғᴏʀᴡᴀʀᴅ ᴍᴇ ᴛʜᴇ ᴘᴏsᴛ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴀᴛ ᴛᴏ sᴀᴠᴇ", timeout=60)
-        except ListenerTimeout:
-            await query.message.reply_text("ʀᴇǫᴜᴇsᴛ ᴛɪᴍᴇ ᴏᴜᴛ !\n\n**⚠️ ʏᴏᴜ ᴀʀᴇ ᴛᴀᴋɪɴɢ ᴛᴏᴏ ʟᴏɴɢ ᴛᴏ ғᴏʀᴡᴀʀᴅ ᴘᴏsᴛ**")
-        if post.text == '/cancel':
-            if channelID == None:
-                return await bot.send_message(chat_id, f"** ⚠️ ᴍᴀᴋᴇ sᴜʀᴇ ʙᴏᴛ ɪs ᴀᴅᴍɪɴ ɪɴ ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ ** \n\nᴄʜᴀᴛ ɪᴅ: `{query.data.split('#')[1]}` ")
-            else:
-                info = await bot.get_chat(chat_id=int(channelID))
-                text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
-                markup = posts(userID, channelID, time, typ)
-                await bot.send_message(chat_id, text, reply_markup=markup)
-            break
-
-        post_id = await bot.copy_message(Config.LOG_CHANNEL, chat_id, post.id)
-
-        if userID not in temp.POST_ID:
-            temp.POST_ID.update({userID: []})
-            temp.POST_ID.get(userID).append(post_id.id)
-
+    if userID not in temp.STORE_DATA:
+        if channelID == None:
+            temp.STORE_DATA.update(
+                {userID: [channelID, time, typ, query.data.split('#')[1]]})
         else:
-            temp.POST_ID.get(userID).append(post_id.id)
+            temp.STORE_DATA.update({userID: [channelID, time, typ]})
 
-        await query.message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\nᴜsᴇ /cancel to stop the process", reply_to_message_id=post.id)
-        continue
+    if userID not in temp.BOOL_ADDPOST:
+        temp.BOOL_ADDPOST.update({userID: True})
+
+    await query.message.reply_text("**(FORWARD ME POST)**\n\nғᴏʀᴡᴀʀᴅ ᴍᴇ ᴛʜᴇ ᴘᴏsᴛs ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴᴀᴛ ᴛᴏ sᴀᴠᴇ")
 
 
 @Client.on_callback_query(filters.regex(r'^viewpost_'))
@@ -176,7 +161,13 @@ async def handle_finally_post(bot: Client, query: CallbackQuery):
 
     if option == 'cancle':
         await query.message.delete()
-        temp.POST_ID.pop(userID)
+        if userID in temp.POST_ID:
+            temp.POST_ID.pop(userID)
+        if userID in temp.BOOL_ADDPOST:
+            temp.BOOL_ADDPOST.pop(userID)
+        if userID in temp.STORE_DATA:
+            temp.STORE_DATA.pop(userID)
+
         return await bot.send_message(chat_id, text="**Process canceled successfully**")
 
     else:
@@ -208,5 +199,46 @@ async def handle_finally_post(bot: Client, query: CallbackQuery):
                     await bot.copy_message(int(channelID), Config.LOG_CHANNEL, int(postID))
 
         await query.message.delete()
-        temp.POST_ID.pop(userID)
+        # clearing stored user datas
+        if userID in temp.POST_ID:
+            temp.POST_ID.pop(userID)
+        if userID in temp.BOOL_ADDPOST:
+            temp.BOOL_ADDPOST.pop(userID)
+        if userID in temp.STORE_DATA:
+            temp.STORE_DATA.pop(userID)
         await query.message.reply_text(f" ** ᴘᴏsᴛs ʜᴀs ʙᴇᴇɴ sᴇɴᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ᴛᴏ {info.title} ** ✅")
+
+
+@Client.on_message(filters.private & filters.forwarded)
+async def handle_forward(bot: Client, message: Message):
+    userID = message.from_user.id
+    if temp.BOOL_ADDPOST.get(userID):
+        try:
+            post_id = await bot.copy_message(Config.LOG_CHANNEL, userID, message.id)
+            if userID not in temp.POST_ID:
+                temp.POST_ID.update({userID: []})
+            temp.POST_ID.get(userID).append(post_id.id)
+            await message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\n ⚠️ ᴡʜᴇɴ ʏᴏᴜ'ʀᴇ ᴅᴏɴᴇ ᴜsᴇ /done", reply_to_message_id=message.id)
+        except Exception as e:
+            print(e)
+
+
+@Client.on_message(filters.private & filters.command('done'))
+async def handle_cancle_addingPost(bot: Client, message: Message):
+
+    userID = message.from_user.id
+    chat_id = message.chat.id
+    channelID = temp.STORE_DATA.get(userID)[0]
+    time = temp.STORE_DATA.get(userID)[1]
+    typ = temp.STORE_DATA.get(userID)[2]
+
+    if temp.BOOL_ADDPOST.get(userID):
+        temp.BOOL_ADDPOST.pop(userID)
+
+    if channelID == None:
+        return await bot.send_message(chat_id, f"** ⚠️ ᴍᴀᴋᴇ sᴜʀᴇ ʙᴏᴛ ɪs ᴀᴅᴍɪɴ ɪɴ ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ ** \n\nᴄʜᴀᴛ ɪᴅ: `{temp.STORE_DATA.get(userID)[3]}` ")
+    else:
+        info = await bot.get_chat(chat_id=int(channelID))
+        text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
+        markup = posts(userID, channelID, time, typ)
+        await bot.send_message(chat_id, text, reply_markup=markup)

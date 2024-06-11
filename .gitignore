@@ -10,4 +10,5 @@ Snowball.session-journal
 
 # Ignore log files and downloads folder
 TelegramBot.log
+config.py
 downloads/
