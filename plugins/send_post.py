@@ -5,19 +5,22 @@ from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, 
 from helper.database import db
 from config import Config, temp
 from helper.utils import extract_title_and_url
+from pyrogram.errors import FloodWait
 from pyromod.exceptions import ListenerTimeout
 
 
 def posts(userID, channelID, time, typ):
 
     postList = temp.POST_ID.get(userID)
-
     postBTN = []
 
     for idx, postID in enumerate(postList):
-        postBTN.append([InlineKeyboardButton(
-            f'POST {idx+1}', callback_data=f'viewpost_{postID}'), InlineKeyboardButton(f'ᴅᴇʟᴇᴛᴇ', callback_data=f'delpost_{postID}_{channelID}_{time}_{typ}')])
+        if idx < 10:
+            postBTN.append([InlineKeyboardButton(
+                f'POST {idx+1}', callback_data=f'viewpost_{postID}'), InlineKeyboardButton(f'ᴅᴇʟᴇᴛᴇ', callback_data=f'delpost_{postID}_{channelID}_{time}_{typ}')])
 
+    postBTN.append([InlineKeyboardButton('ʙᴀᴄᴋ', callback_data=f'back_{10}_{channelID}_{time}_{typ}'),
+                   InlineKeyboardButton('ɴᴇxᴛ', callback_data=f'next_{10}_{channelID}_{time}_{typ}')])
     postBTN.append([InlineKeyboardButton(
         'sᴇɴᴅ', callback_data=f'finally_send_{channelID}_{time}_{typ}')])
     postBTN.append([InlineKeyboardButton(
@@ -28,6 +31,7 @@ def posts(userID, channelID, time, typ):
 @Client.on_message(filters.private & filters.command('send_post'))
 async def handle_send_post(bot: Client, message: Message):
     user_id = message.from_user.id
+
     channels = await db.get_channels(user_id)
 
     if not channels:
@@ -140,6 +144,7 @@ async def handle_delete_post(bot: Client, query: CallbackQuery):
     channel_id = query.data.split('_')[2]
     time = query.data.split('_')[3]
     typ = query.data.split('_')[4]
+
     try:
         await bot.delete_messages(int(Config.LOG_CHANNEL), int(post_id))
         temp.POST_ID[user_id].remove(int(post_id))
@@ -211,16 +216,19 @@ async def handle_finally_post(bot: Client, query: CallbackQuery):
 
 @Client.on_message(filters.private & filters.forwarded)
 async def handle_forward(bot: Client, message: Message):
-    userID = message.from_user.id
-    if temp.BOOL_ADDPOST.get(userID):
-        try:
-            post_id = await bot.copy_message(Config.LOG_CHANNEL, userID, message.id)
-            if userID not in temp.POST_ID:
-                temp.POST_ID.update({userID: []})
-            temp.POST_ID.get(userID).append(post_id.id)
-            await message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\n ⚠️ ᴡʜᴇɴ ʏᴏᴜ'ʀᴇ ᴅᴏɴᴇ ᴜsᴇ /done", reply_to_message_id=message.id)
-        except Exception as e:
-            print(e)
+    try:
+        userID = message.from_user.id
+        if temp.BOOL_ADDPOST.get(userID):
+            try:
+                post_id = await bot.copy_message(Config.LOG_CHANNEL, userID, message.id)
+                if userID not in temp.POST_ID:
+                    temp.POST_ID.update({userID: []})
+                temp.POST_ID.get(userID).append(post_id.id)
+                await message.reply_text("**ᴛʜɪs ᴘᴏsᴛ ᴀᴅᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅**\n\n ⚠️ ᴡʜᴇɴ ʏᴏᴜ'ʀᴇ ᴅᴏɴᴇ ᴜsᴇ /done", reply_to_message_id=message.id)
+            except Exception as e:
+                print(e)
+    except FloodWait as e:
+        await asyncio.sleep(e.value)
 
 
 @Client.on_message(filters.private & filters.command('done'))
@@ -242,3 +250,73 @@ async def handle_cancle_addingPost(bot: Client, message: Message):
         text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
         markup = posts(userID, channelID, time, typ)
         await bot.send_message(chat_id, text, reply_markup=markup)
+
+
+@Client.on_callback_query(filters.regex('^next_'))
+async def handle_nextpage(bot: Client, query: CallbackQuery):
+    currentPosition = int(query.data.split('_')[1])
+
+    userID = query.from_user.id
+    postList = temp.POST_ID.get(userID)
+
+    channelID = query.data.split('_')[2]
+    time = query.data.split('_')[3]
+    typ = query.data.split('_')[4]
+
+    nextBtn = []
+    try:
+        for idx, postID in enumerate(postList):
+            if idx >= currentPosition and idx < currentPosition + 10:
+                nextBtn.append([InlineKeyboardButton(
+                    f'POST {idx+1}', callback_data=f'viewpost_{postID}'), InlineKeyboardButton(f'ᴅᴇʟᴇᴛᴇ', callback_data=f'delpost_{postID}_{channelID}_{time}_{typ}')])
+        
+        if currentPosition >= len(postList):
+            return await query.answer('No More Pages', show_alert=True)
+
+        nextBtn.append([InlineKeyboardButton('ʙᴀᴄᴋ', callback_data=f'back_{currentPosition+10}_{channelID}_{time}_{typ}'),
+                        InlineKeyboardButton('ɴᴇxᴛ', callback_data=f'next_{currentPosition+10}_{channelID}_{time}_{typ}')])
+
+        nextBtn.append([InlineKeyboardButton(
+            'sᴇɴᴅ', callback_data=f'finally_send_{channelID}_{time}_{typ}')])
+        nextBtn.append([InlineKeyboardButton(
+            'ᴄᴀɴᴄᴇʟ', callback_data='finally_cancle')])
+        info = await bot.get_chat(int(channelID))
+        text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
+        await query.message.edit(text, reply_markup=InlineKeyboardMarkup(nextBtn))
+
+    except Exception as e:
+        print(e)
+
+
+@Client.on_callback_query(filters.regex('^back_'))
+async def handle_backpage(bot: Client, query: CallbackQuery):
+
+    currentPosition = int(query.data.split('_')[1])
+
+    if currentPosition - 10 == 0:
+        return await query.answer('You are in first page can not go back further', show_alert=True)
+
+    userID = query.from_user.id
+    postList = temp.POST_ID.get(userID)
+
+    channelID = query.data.split('_')[2]
+    time = query.data.split('_')[3]
+    typ = query.data.split('_')[4]
+
+    nextBtn = []
+
+    for idx, postID in enumerate(postList):
+        if idx >= int(currentPosition-20) and idx < currentPosition - 10:
+            nextBtn.append([InlineKeyboardButton(
+                f'POST {idx+1}', callback_data=f'viewpost_{postID}'), InlineKeyboardButton(f'ᴅᴇʟᴇᴛᴇ', callback_data=f'delpost_{postID}_{channelID}_{time}_{typ}')])
+
+    nextBtn.append([InlineKeyboardButton('ʙᴀᴄᴋ', callback_data=f'back_{currentPosition-10}_{channelID}_{time}_{typ}'),
+                   InlineKeyboardButton('ɴᴇxᴛ', callback_data=f'next_{currentPosition-10}_{channelID}_{time}_{typ}')])
+
+    nextBtn.append([InlineKeyboardButton(
+        'sᴇɴᴅ', callback_data=f'finally_send_{channelID}_{time}_{typ}')])
+    nextBtn.append([InlineKeyboardButton(
+        'ᴄᴀɴᴄᴇʟ', callback_data='finally_cancle')])
+    info = await bot.get_chat(int(channelID))
+    text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
+    await query.message.edit(text, reply_markup=InlineKeyboardMarkup(nextBtn))
