@@ -151,8 +151,10 @@ async def handle_delete_post(bot: Client, query: CallbackQuery):
     except Exception as e:
         print(e)
 
+    postList = temp.POST_ID.get(user_id)
+
     info = await bot.get_chat(chat_id=int(channel_id))
-    text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
+    text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n** ᴛᴏᴛᴀʟ ᴘᴏsᴛs : ** {len(postList)}\n\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
     markup = posts(user_id, channel_id, time, typ)
     await query.message.edit(text=text, reply_markup=markup)
 
@@ -247,7 +249,8 @@ async def handle_cancle_addingPost(bot: Client, message: Message):
         return await bot.send_message(chat_id, f"** ⚠️ ᴍᴀᴋᴇ sᴜʀᴇ ʙᴏᴛ ɪs ᴀᴅᴍɪɴ ɪɴ ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ ** \n\nᴄʜᴀᴛ ɪᴅ: `{temp.STORE_DATA.get(userID)[3]}` ")
     else:
         info = await bot.get_chat(chat_id=int(channelID))
-        text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
+        postList = temp.POST_ID.get(userID)
+        text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n** ᴛᴏᴛᴀʟ ᴘᴏsᴛs : ** {len(postList)}\n\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
         markup = posts(userID, channelID, time, typ)
         await bot.send_message(chat_id, text, reply_markup=markup)
 
@@ -269,7 +272,7 @@ async def handle_nextpage(bot: Client, query: CallbackQuery):
             if idx >= currentPosition and idx < currentPosition + 10:
                 nextBtn.append([InlineKeyboardButton(
                     f'POST {idx+1}', callback_data=f'viewpost_{postID}'), InlineKeyboardButton(f'ᴅᴇʟᴇᴛᴇ', callback_data=f'delpost_{postID}_{channelID}_{time}_{typ}')])
-        
+
         if currentPosition >= len(postList):
             return await query.answer('No More Pages', show_alert=True)
 
@@ -281,7 +284,7 @@ async def handle_nextpage(bot: Client, query: CallbackQuery):
         nextBtn.append([InlineKeyboardButton(
             'ᴄᴀɴᴄᴇʟ', callback_data='finally_cancle')])
         info = await bot.get_chat(int(channelID))
-        text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
+        text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n** ᴛᴏᴛᴀʟ ᴘᴏsᴛs : ** {len(postList)}\n\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
         await query.message.edit(text, reply_markup=InlineKeyboardMarkup(nextBtn))
 
     except Exception as e:
@@ -318,5 +321,5 @@ async def handle_backpage(bot: Client, query: CallbackQuery):
     nextBtn.append([InlineKeyboardButton(
         'ᴄᴀɴᴄᴇʟ', callback_data='finally_cancle')])
     info = await bot.get_chat(int(channelID))
-    text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
+    text = f"Dᴏᴜʙʟᴇ Cʜᴇᴄᴋ !\n\n** ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟ : ** {info.title}\n** ᴅᴇʟᴀʏ : ** {time}{typ}\n** ᴛᴏᴛᴀʟ ᴘᴏsᴛs : ** {len(postList)}\n\n👁️ ᴘᴏsᴛs ᴀʀᴇ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ ᴄᴀɴ ᴠɪᴇᴡ ᴏʀ ᴅᴇʟᴇᴛᴇ ᴛʜᴇ ᴘᴏsᴛs"
     await query.message.edit(text, reply_markup=InlineKeyboardMarkup(nextBtn))

@@ -72,4 +72,3 @@ class temp(object):
     POST_ID = {}
     STORE_DATA = {}
     BOOL_ADDPOST = {}
-
