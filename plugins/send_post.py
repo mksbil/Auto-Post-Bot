@@ -32,6 +32,9 @@ def posts(userID, channelID, time, typ):
 async def handle_send_post(bot: Client, message: Message):
     user_id = message.from_user.id
 
+    if user_id in temp.STORE_DATA:
+        return await message.reply_text("** ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ ᴜɴᴛɪʟ ᴘʀᴇᴠɪᴏᴜs ᴘʀᴏᴄᴇss ɪs ᴄᴏᴍᴘʟᴇᴛᴇᴅ **")
+
     channels = await db.get_channels(user_id)
 
     if not channels:
