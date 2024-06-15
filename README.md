@@ -10,6 +10,8 @@
 
 <a href="https://heroku.com/deploy?template=https://github.com/Snowball-01/Auto-Post-Bot"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy"></a>
 
+## Deploy To Koyeb
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/Snowball-01/Auto-Post-Bot/tree/main&env[BOT_TOKEN]&env[API_ID]&env[API_HASH]&env[ADMIN]&env[DB_URL]&env[BOT_USERNAME]&env[FORCE_SUB]&env[LOG_CHANNEL]&run_command=python%20bot.py&branch=main&name=Auto-Post-Bot)
 
 
 ## Configs
