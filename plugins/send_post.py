@@ -177,7 +177,10 @@ async def handle_done_posting(bot: Client, query: CallbackQuery):
         
         await query.message.delete()
         
-        time, typ = await interval(bot, query)
+        try:
+            time, typ = await interval(bot, query)
+        except:
+            temp.STORE_DATA.pop(userID)
         
         temp.STORE_DATA[userID].append(time)
         temp.STORE_DATA[userID].append(typ)
@@ -263,7 +266,7 @@ async def handle_finally_post(bot: Client, query: CallbackQuery):
             info = await bot.get_chat(int(chnlID))
             buttons = await db.get_buttons(userID)
             saveBTN = []
-            await query.message.edit(f"** ᴘᴏsᴛs ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴛᴏ {info.title} ᴀғᴛᴇʀ {time}{typ} ᴅᴇʟᴀʏ ** ♻️\n\nᴛᴏᴛᴀʟ ᴘᴏsᴛ : {len(postList)}\nsᴜᴄᴄᴇssғᴜʟʟʏ sᴇɴᴛ: {success}", reply_markup=InlineKeyboardMarkup(saveBTN))
+            await query.message.edit(f"** ᴘᴏsᴛs ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴛᴏ {info.title} ᴀғᴛᴇʀ {time}{typ} ᴅᴇʟᴀʏ ** ♻️\n\nᴛᴏᴛᴀʟ ᴘᴏsᴛ : {len(postList)}\nsᴜᴄᴄᴇssғᴜʟʟʏ sᴇɴᴛ: {success}")
             if buttons:
                 for btn in buttons:
                     text, url = extract_title_and_url(btn)
@@ -274,18 +277,22 @@ async def handle_finally_post(bot: Client, query: CallbackQuery):
                         await detect_time(time, typ)
                         await bot.copy_message(int(chnlID), Config.LOG_CHANNEL, int(postID), reply_markup=InlineKeyboardMarkup(saveBTN))
                         success += 1
+                        await query.message.edit(f"** ᴘᴏsᴛs ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴛᴏ {info.title} ᴀғᴛᴇʀ {time}{typ} ᴅᴇʟᴀʏ ** ♻️\n\nᴛᴏᴛᴀʟ ᴘᴏsᴛ : {len(postList)}\nsᴜᴄᴄᴇssғᴜʟʟʏ sᴇɴᴛ: {success}")
                     else:
                         await bot.copy_message(int(chnlID), Config.LOG_CHANNEL, int(postID), reply_markup=InlineKeyboardMarkup(saveBTN))
                         success += 1
+                        await query.message.edit(f"** ᴘᴏsᴛs ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴛᴏ {info.title} ᴀғᴛᴇʀ {time}{typ} ᴅᴇʟᴀʏ ** ♻️\n\nᴛᴏᴛᴀʟ ᴘᴏsᴛ : {len(postList)}\nsᴜᴄᴄᴇssғᴜʟʟʏ sᴇɴᴛ: {success}")
             else:
                 for postID in temp.POST_ID[userID]:
                     if time != 0:
                         await detect_time(time, typ)
                         await bot.copy_message(int(chnlID), Config.LOG_CHANNEL, int(postID))
                         success += 1
+                        await query.message.edit(f"** ᴘᴏsᴛs ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴛᴏ {info.title} ᴀғᴛᴇʀ {time}{typ} ᴅᴇʟᴀʏ ** ♻️\n\nᴛᴏᴛᴀʟ ᴘᴏsᴛ : {len(postList)}\nsᴜᴄᴄᴇssғᴜʟʟʏ sᴇɴᴛ: {success}")
                     else:
                         await bot.copy_message(int(chnlID), Config.LOG_CHANNEL, int(postID))
                         success += 1
+                        await query.message.edit(f"** ᴘᴏsᴛs ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴛᴏ {info.title} ᴀғᴛᴇʀ {time}{typ} ᴅᴇʟᴀʏ ** ♻️\n\nᴛᴏᴛᴀʟ ᴘᴏsᴛ : {len(postList)}\nsᴜᴄᴄᴇssғᴜʟʟʏ sᴇɴᴛ: {success}")
 
         await query.message.delete()
         allTitles = ""
