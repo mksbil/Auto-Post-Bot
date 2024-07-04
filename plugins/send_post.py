@@ -8,8 +8,6 @@ from helper.utils import extract_title_and_url
 from pyrogram.errors import FloodWait
 from pyromod.exceptions import ListenerTimeout
 
-success = 0
-
 
 def posts(userID, time, typ):
 
@@ -239,9 +237,9 @@ async def handle_delete_post(bot: Client, query: CallbackQuery):
     await query.message.edit(text=text, reply_markup=markup)
 
 
-async def send_post_to_channel(bot, query, buttons, time, typ, userID, chnlID, info, postList, ms=None):
+async def send_post_to_channel(bot, buttons, time, typ, userID, chnlID, info, postList, ms=None):
     saveBTN = []
-    global success
+    success = 0
     
     if buttons:
         for btn in buttons:
@@ -277,8 +275,7 @@ async def handle_finally_post(bot: Client, query: CallbackQuery):
     option = query.data.split('_')[1]
     chat_id = query.message.chat.id
     userID = query.from_user.id
-    global success
-    
+
     if option == 'cancle':
         await query.message.delete()
         if userID in temp.POST_ID:
@@ -300,8 +297,8 @@ async def handle_finally_post(bot: Client, query: CallbackQuery):
         for chnlID in channelIDS:
             info = await bot.get_chat(int(chnlID))
             buttons = await db.get_buttons(userID)
-            ms = await query.message.edit(f"** ᴘᴏsᴛs ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴛᴏ {info.title} ᴀғᴛᴇʀ {time}{typ} ᴅᴇʟᴀʏ ** ♻️\n\nᴛᴏᴛᴀʟ ᴘᴏsᴛ : {len(postList)}\nsᴜᴄᴄᴇssғᴜʟʟʏ sᴇɴᴛ: {success}")
-            tasks.append(send_post_to_channel(bot, query, buttons, time, typ, userID, chnlID, info, postList, ms))
+            ms = await query.message.edit(f"** ᴘᴏsᴛs ᴡɪʟʟ ʙᴇ sᴇɴᴅ ᴛᴏ {info.title} ᴀғᴛᴇʀ {time}{typ} ᴅᴇʟᴀʏ ** ♻️\n\nᴛᴏᴛᴀʟ ᴘᴏsᴛ : {len(postList)}\nsᴜᴄᴄᴇssғᴜʟʟʏ sᴇɴᴛ: {0}")
+            tasks.append(send_post_to_channel(bot, buttons, time, typ, userID, chnlID, info, postList, ms))
         
         await asyncio.gather(*tasks)
         await query.message.delete()
