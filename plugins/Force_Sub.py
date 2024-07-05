@@ -21,7 +21,7 @@ async def not_subscribed(_, client, message):
 
 
 @Client.on_message(filters.private & filters.create(not_subscribed))
-async def forces_sub(client:Client, message):
+async def forces_sub(client, message):
     
     invite_link = await client.create_chat_invite_link(int(Config.FORCE_SUB))
     buttons = [[InlineKeyboardButton(
