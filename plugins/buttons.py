@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from helper.database import db
-from pyromod.exceptions import ListenerTimeout
+from pyrogram.errors import ListenerTimeout
 from config import Config
 from helper.utils import extract_title_and_url
 
