@@ -5,8 +5,7 @@ from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, 
 from helper.database import db
 from config import Config, temp
 from helper.utils import extract_title_and_url
-from pyrogram.errors import FloodWait
-from pyromod.exceptions import ListenerTimeout
+from pyrogram.errors import FloodWait, ListenerTimeout
 
 
 def posts(userID, time, typ):
