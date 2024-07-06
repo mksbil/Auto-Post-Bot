@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from helper.database import db
-from pyromod.exceptions import ListenerTimeout
+from pyrogram.errors import ListenerTimeout
 
 
 async def handle_channel(bot, user_id):
