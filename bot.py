@@ -12,7 +12,6 @@ from helper.database import db
 from pytz import timezone
 from datetime import datetime
 from plugins.web_support import web_server
-from pyromod import listen
 
 logging.config.fileConfig('logging.conf')
 logging.getLogger().setLevel(logging.INFO)
