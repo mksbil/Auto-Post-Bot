@@ -23,7 +23,7 @@ async def not_subscribed(_, client, message):
 @Client.on_message(filters.private & filters.create(not_subscribed))
 async def forces_sub(client, message):
     
-    invite_link = await client.create_chat_invite_link(int(Config.FORCE_SUB))
+    invite_link = await client.create_chat_invite_link(int(Config.FORCE_SUB), creates_join_request=True)
     buttons = [[InlineKeyboardButton(
         text="✿ Jᴏɪɴ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ ✿", url=invite_link.invite_link) ]]
     text = "**Sᴏʀʀy Dᴜᴅᴇ Yᴏᴜ'ʀᴇ Nᴏᴛ Jᴏɪɴᴇᴅ My Cʜᴀɴɴᴇʟ ☹️. Sᴏ Pʟᴇᴀꜱᴇ Jᴏɪɴ Oᴜʀ Uᴩᴅᴀᴛᴇ Cʜᴀɴɴᴇʟ Tᴏ Cᴄᴏɴᴛɪɴᴜᴇ**"
